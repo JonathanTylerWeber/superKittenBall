@@ -4,6 +4,7 @@ import { RigidBody, useRapier, RapierRigidBody } from "@react-three/rapier";
 import { useCallback, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { useGame } from "./stores/useGame";
+import { PlayerBall } from "./PlayerBall";
 
 export default function Player() {
   const [subscribeKeys, getKeys] = useKeyboardControls();
@@ -47,8 +48,8 @@ export default function Player() {
     const { forward, backward, leftward, rightward } = getKeys();
     const impulse = { x: 0, y: 0, z: 0 };
     const torque = { x: 0, y: 0, z: 0 };
-    const impulseStrength = 0.6 * delta;
-    const torqueStrength = 0.2 * delta;
+    const impulseStrength = 0.8 * delta;
+    const torqueStrength = 0.4 * delta;
 
     if (forward) {
       impulse.z -= impulseStrength;
@@ -150,7 +151,7 @@ export default function Player() {
     const ray = new rapier.Ray(origin, direction);
     const hit = world.castRay(ray, 10, true);
     if (hit && hit.timeOfImpact < 0.15) {
-      body.current.applyImpulse({ x: 0, y: 0.5, z: 0 }, true);
+      body.current.applyImpulse({ x: 0, y: 1, z: 0 }, true);
     }
   }, [rapier.Ray, world]);
 
@@ -212,14 +213,15 @@ export default function Player() {
         angularDamping={0.5}
       >
         <mesh castShadow>
-          <sphereGeometry args={[0.3, 32, 16]} />
+          <sphereGeometry args={[0.299, 32, 16]} />
           <meshStandardMaterial
             transparent={true}
-            opacity={0.35}
+            opacity={0.25}
             roughness={0}
             metalness={0.75}
           />
         </mesh>
+        <PlayerBall />
       </RigidBody>
       <primitive
         ref={catRef}

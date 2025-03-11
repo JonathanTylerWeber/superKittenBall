@@ -19,7 +19,7 @@ export function BlockStart({ position = [0, 0, 0] }: BlockStartProps) {
           position={[0.75, 0.65, 0]}
           rotation-y={-0.25}
         >
-          Marble Race
+          Super Kitten Ball
           <meshBasicMaterial toneMapped={false} />
         </Text>
       </Float>

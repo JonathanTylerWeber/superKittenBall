@@ -1,7 +1,7 @@
 import { useAnimations, useGLTF, useKeyboardControls } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { RigidBody, useRapier, RapierRigidBody } from "@react-three/rapier";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { useGame } from "./stores/useGame";
 
@@ -13,16 +13,20 @@ export default function Player() {
   const [smoothCameraPosition] = useState(() => new THREE.Vector3(10, 10, 10));
   const [smoothCameraTarget] = useState(() => new THREE.Vector3());
 
+  const [currentAction, setCurrentAction] =
+    useState<THREE.AnimationAction | null>(null);
+
+  const [bodyKey, setBodyKey] = useState(0);
+
   const start = useGame((state) => state.start);
   const end = useGame((state) => state.end);
   const restart = useGame((state) => state.restart);
   const blocksCount = useGame((state) => state.blocksCount);
 
   const cat = useGLTF("./cat.glb");
-  console.log(cat);
   const catRef = useRef<THREE.Group | null>(null);
 
-  const { actions } = useAnimations(cat.animations, catRef);
+  const animations = useAnimations(cat.animations, catRef);
 
   // Apply color to the cat model when it's loaded
   useEffect(() => {
@@ -39,14 +43,6 @@ export default function Player() {
     }
   }, [cat]); // Only apply when the cat model is loaded
 
-  // Play the animation once the model is loaded
-  // useEffect(() => {
-  //   if (actions && actions["ArmatureAction"]) {
-  //     // Play the animation when the model and actions are loaded
-  //     actions["ArmatureAction"].play();
-  //   }
-  // }, [actions]); // Ensure this runs only when actions are available
-
   useFrame((state, delta) => {
     const { forward, backward, leftward, rightward } = getKeys();
     const impulse = { x: 0, y: 0, z: 0 };
@@ -54,36 +50,6 @@ export default function Player() {
     const impulseStrength = 0.6 * delta;
     const torqueStrength = 0.2 * delta;
 
-    // cat rotation basedd on input
-    // Determine the direction based on key inputs
-    // const moveDirection = new THREE.Vector3();
-
-    // if (forward) {
-    //   moveDirection.z += 1;
-    // }
-    // if (backward) {
-    //   moveDirection.z -= 1;
-    // }
-    // if (leftward) {
-    //   moveDirection.x -= 1;
-    // }
-    // if (rightward) {
-    //   moveDirection.x += 1;
-    // }
-
-    // // Normalize the direction to avoid faster diagonal movement
-    // moveDirection.normalize();
-
-    // if (moveDirection.length() > 0) {
-    //   // Update the cat's rotation to face the movement direction
-    //   if (catRef.current) {
-    //     const angle = Math.atan2(moveDirection.z, moveDirection.x);
-    //     catRef.current.rotation.y = angle; // Update the Y rotation to make the cat face the direction
-    //   }
-    // }
-
-    //
-    //
     if (forward) {
       impulse.z -= impulseStrength;
       torque.x -= torqueStrength;
@@ -107,46 +73,38 @@ export default function Player() {
 
       // cat
       // Get the velocity vector
-      const velocity = body.current.linvel();
-      const moveDirection = new THREE.Vector3(velocity.x, 0, velocity.z);
+      const velocity = body.current?.linvel();
+      const horizontalVelocity = new THREE.Vector3(velocity.x, 0, velocity.z);
+      const verticalVelocity = new THREE.Vector3(0, velocity.y, 0);
+      const velocityMagnitude = horizontalVelocity.length();
 
-      // Calculate the magnitude (length) of the velocity vector
-      const velocityMagnitude = moveDirection.length();
+      // Set thresholds for switching between animations
+      const runThreshold = 0.5;
 
-      // Use a small threshold to detect significant movement (e.g., 0.1)
-      const movementThreshold = 0.5; // Threshold for detecting movement
+      let newAction: THREE.AnimationAction | null = null;
 
-      if (actions && actions["ArmatureAction"] && actions["EmptyAction"]) {
-        if (velocityMagnitude > movementThreshold) {
-          // If the object is moving, play ArmatureAction (running)
-          if (actions["EmptyAction"].isRunning()) {
-            actions["EmptyAction"].stop();
-          }
-          if (!actions["ArmatureAction"].isRunning()) {
-            actions["ArmatureAction"].play();
-            actions["ArmatureAction"].crossFadeFrom(
-              actions["EmptyAction"],
-              0.3,
-              true
-            );
-          }
-        } else {
-          // If the object is not moving, play EmptyAction (idle)
-          if (actions["ArmatureAction"].isRunning()) {
-            actions["ArmatureAction"].stop();
-          }
-          if (!actions["EmptyAction"].isRunning()) {
-            actions["EmptyAction"].play();
-            actions["EmptyAction"].crossFadeFrom(
-              actions["ArmatureAction"],
-              0.3,
-              true
-            );
-          }
+      // Switch animation based on horizontal velocity
+      if (
+        velocityMagnitude > runThreshold ||
+        verticalVelocity.length() > 0.05
+      ) {
+        newAction = animations.actions["ArmatureAction"];
+      } else {
+        newAction = animations.actions["EmptyAction"];
+      }
+
+      // Crossfade between animations for smooth transition
+      if (newAction !== currentAction) {
+        if (currentAction) {
+          currentAction.fadeOut(0.5);
         }
+        newAction?.reset().fadeIn(0.5).play();
+        setCurrentAction(newAction);
       }
 
       // Rotate the cat based on the direction of movement
+      const moveDirection = new THREE.Vector3(velocity.x, 0, velocity.z);
+
       moveDirection.normalize();
       if (moveDirection.length() > 0 && catRef.current) {
         const angle = Math.atan2(moveDirection.z, moveDirection.x);
@@ -180,14 +138,11 @@ export default function Player() {
         const catPosition = new THREE.Vector3().copy(bodyPosition);
         catPosition.y -= 0.2;
         catRef.current.position.copy(catPosition);
-
-        // Optionally, if you want to prevent rotation of the cat:
-        // catRef.current.rotation.set(0, 0, 0);
       }
     }
   });
 
-  const jump = () => {
+  const jump = useCallback(() => {
     if (!body.current) return;
     const origin = body.current.translation();
     origin.y -= 0.31;
@@ -197,16 +152,19 @@ export default function Player() {
     if (hit && hit.timeOfImpact < 0.15) {
       body.current.applyImpulse({ x: 0, y: 0.5, z: 0 }, true);
     }
-  };
+  }, [rapier.Ray, world]);
 
   const reset = () => {
+    setBodyKey((prevKey) => prevKey + 1);
+
     if (body.current) {
       body.current.setTranslation({ x: 0, y: 1, z: 0 }, true);
       body.current.setLinvel({ x: 0, y: 0, z: 0 }, true);
       body.current.setAngvel({ x: 0, y: 0, z: 0 }, true);
     }
+
     if (catRef.current) {
-      catRef.current.rotation.set(0, Math.PI * 0.5, 0); // Reset the cat's rotation (Math.PI * 0.5 makes it face forward in your case)
+      catRef.current.rotation.set(0, Math.PI * 0.5, 0); // Reset the cat's rotation (Math.PI * 0.5 makes it face forward)
     }
   };
 
@@ -238,11 +196,12 @@ export default function Player() {
       unsubscribeJump();
       unsubscribeAny();
     };
-  }, [subscribeKeys, start]);
+  }, [subscribeKeys, start, jump]);
 
   return (
     <>
       <RigidBody
+        key={bodyKey}
         ref={body}
         canSleep={false}
         position={[0, 1, 0]}
@@ -254,7 +213,12 @@ export default function Player() {
       >
         <mesh castShadow>
           <sphereGeometry args={[0.3, 32, 16]} />
-          <meshStandardMaterial transparent={true} opacity={0.5} />
+          <meshStandardMaterial
+            transparent={true}
+            opacity={0.35}
+            roughness={0}
+            metalness={0.75}
+          />
         </mesh>
       </RigidBody>
       <primitive

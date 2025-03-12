@@ -17,7 +17,7 @@ export const useGame = create<
   [["zustand/subscribeWithSelector", never]]
 >(
   subscribeWithSelector((set) => ({
-    blocksCount: 10,
+    blocksCount: 0,
     blocksSeed: 0,
     startTime: 0,
     endTime: 0,

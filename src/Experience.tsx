@@ -4,6 +4,7 @@ import { Level } from "./Level";
 import { Physics } from "@react-three/rapier";
 import Player from "./Player.jsx";
 import { useGame } from "./stores/useGame.js";
+import { Environment } from "@react-three/drei";
 
 export default function Experience() {
   const blocksCount = useGame((state) => state.blocksCount);
@@ -13,9 +14,15 @@ export default function Experience() {
     <>
       {/* <OrbitControls makeDefault /> */}
 
-      <color args={["#bdedfc"]} attach="background" />
+      {/* <color args={["#bdedfc"]} attach="background" /> */}
 
-      <Physics debug={false}>
+      <Environment
+        files="./autumn_field_puresky_1k.hdr"
+        background={true}
+        environmentIntensity={0}
+      />
+
+      <Physics debug={true}>
         <Lights />
         <Level count={blocksCount} seed={blocksSeed} />
         <Player />

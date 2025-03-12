@@ -1,13 +1,17 @@
 import * as THREE from "three";
 
+const textureLoader = new THREE.TextureLoader();
+const cardboardTexture = textureLoader.load("cardboard.jpg");
+cardboardTexture.colorSpace = THREE.SRGBColorSpace;
+
 export const boxGeometry = new THREE.BoxGeometry(1, 1, 1);
 
 export const floor1Material = new THREE.MeshStandardMaterial({
-  color: "limegreen",
+  map: cardboardTexture,
 });
 
 export const floor2Material = new THREE.MeshStandardMaterial({
-  color: "greenyellow",
+  map: cardboardTexture,
 });
 
 export const obstacleMaterial = new THREE.MeshStandardMaterial({

@@ -128,7 +128,7 @@ export default function Player() {
       state.camera.lookAt(smoothCameraTarget);
 
       // Phases
-      if (bodyPosition.z < -(blocksCount * 4 + 2)) {
+      if (bodyPosition.z < -(blocksCount * 4 + 2) - 2) {
         end();
       }
       if (bodyPosition.y < -4) {

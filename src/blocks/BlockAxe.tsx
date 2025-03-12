@@ -26,13 +26,15 @@ export function BlockAxe({ position = [0, 0, 0] }: BlockAxeProps) {
 
   return (
     <group position={position}>
-      <mesh
-        geometry={boxGeometry}
-        material={floor2Material}
-        position={[0, -0.1, 0]}
-        scale={[4, 0.2, 4]}
-        receiveShadow
-      />
+      <RigidBody type="fixed" restitution={0.2} friction={0}>
+        <mesh
+          geometry={boxGeometry}
+          material={floor2Material}
+          position={[0, -0.1, 0]}
+          scale={[4, 0.2, 4]}
+          receiveShadow
+        />
+      </RigidBody>
       <RigidBody
         ref={obstacle}
         type="kinematicPosition"

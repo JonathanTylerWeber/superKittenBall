@@ -1,7 +1,7 @@
 import * as THREE from "three";
 
 const textureLoader = new THREE.TextureLoader();
-const cardboardTexture = textureLoader.load("cardboard.jpg");
+const cardboardTexture = textureLoader.load("./textures/cardboard.jpg");
 cardboardTexture.colorSpace = THREE.SRGBColorSpace;
 
 export const boxGeometry = new THREE.BoxGeometry(1, 1, 1);

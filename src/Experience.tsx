@@ -3,13 +3,9 @@ import Lights from "./Lights.jsx";
 import { Level } from "./Level";
 import { Physics } from "@react-three/rapier";
 import Player from "./Player.jsx";
-import { useGame } from "./stores/useGame.js";
 import { Environment } from "@react-three/drei";
 
 export default function Experience() {
-  const blocksCount = useGame((state) => state.blocksCount);
-  const blocksSeed = useGame((state) => state.blocksSeed);
-
   return (
     <>
       {/* <OrbitControls makeDefault /> */}
@@ -24,7 +20,7 @@ export default function Experience() {
 
       <Physics debug={true}>
         <Lights />
-        <Level count={blocksCount} seed={blocksSeed} />
+        <Level />
         <Player />
       </Physics>
     </>

@@ -21,9 +21,9 @@ body,
 
 .time {
   position: absolute;
-  top: 15%;
+  top: 5%;
   left: 0;
-  width: 100%;
+  width: 25%;
   color: #fff;
   font-size: 6vh;
   background: #00000033;

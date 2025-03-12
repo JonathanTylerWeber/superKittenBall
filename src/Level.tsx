@@ -1,36 +1,19 @@
-import { useMemo } from "react";
 import { BlockSpinner } from "./blocks/BlockSpinner";
-import { BlockAxe } from "./blocks/BlockAxe";
+// import { BlockAxe } from "./blocks/BlockAxe";
 import { BlockLimbo } from "./blocks/BlockLimbo";
 import { BlockStart } from "./blocks/BlockStart";
 import { BlockEnd } from "./blocks/BlockEnd";
-import { Bounds } from "./blocks/Bounds";
+import { Block } from "./blocks/Block";
 
-export function Level({
-  count = 5,
-  types = [BlockSpinner, BlockAxe, BlockLimbo],
-}: {
-  count?: number;
-  types?: Array<React.ComponentType<{ position?: [number, number, number] }>>;
-  seed?: number;
-}) {
-  const blocks = useMemo(() => {
-    const blocks = [];
-    for (let i = 0; i < count; i++) {
-      const type = types[Math.floor(Math.random() * types.length)];
-      blocks.push(type);
-    }
-    return blocks;
-  }, [count, types]);
-
+export function Level() {
   return (
     <>
       <BlockStart position={[0, 0, 0]} />
-      {blocks.map((Block, index) => (
-        <Block key={index} position={[0, 0, -(index + 1) * 4]} />
-      ))}
-      <BlockEnd position={[0, 0, -(count + 1) * 4]} />
-      <Bounds length={count + 2} />
+      <BlockSpinner position={[-1, 0.5, -6]} />
+      <Block position={[0, 1, -10]} scale={[1, 0.2, 4]} />
+      <BlockLimbo position={[1, 1.5, -14]} />
+      <BlockEnd position={[0, 2, -18]} />
+      {/* <Bounds length={3 + 2} /> */}
     </>
   );
 }

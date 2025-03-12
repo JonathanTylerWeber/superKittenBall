@@ -1,6 +1,7 @@
 // BlockStart.tsx
 import { Float, Text } from "@react-three/drei";
 import { boxGeometry, floor1Material } from "./resources";
+import { RigidBody } from "@react-three/rapier";
 
 interface BlockStartProps {
   position?: [number, number, number];
@@ -23,13 +24,15 @@ export function BlockStart({ position = [0, 0, 0] }: BlockStartProps) {
           <meshBasicMaterial toneMapped={false} />
         </Text>
       </Float>
-      <mesh
-        geometry={boxGeometry}
-        material={floor1Material}
-        position={[0, -0.1, 0]}
-        scale={[4, 0.2, 4]}
-        receiveShadow
-      />
+      <RigidBody type="fixed" restitution={0.2} friction={0}>
+        <mesh
+          geometry={boxGeometry}
+          material={floor1Material}
+          position={[0, -0.1, 0]}
+          scale={[4, 0.2, 4]}
+          receiveShadow
+        />
+      </RigidBody>
     </group>
   );
 }

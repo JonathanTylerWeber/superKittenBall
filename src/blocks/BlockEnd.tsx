@@ -11,7 +11,7 @@ interface BlockEndProps {
 }
 
 export function BlockEnd({ position = [0, 0, 0] }: BlockEndProps) {
-  const fish = useGLTF("./fish.glb");
+  const fish = useGLTF("./models/fish.glb");
   const fishRef = useRef<Group>(null);
 
   fish.scene.children.forEach((mesh) => {
@@ -38,13 +38,15 @@ export function BlockEnd({ position = [0, 0, 0] }: BlockEndProps) {
         FINISH
         <meshBasicMaterial toneMapped={false} />
       </Text>
-      <mesh
-        geometry={boxGeometry}
-        material={floor1Material}
-        position={[0, 0, 0]}
-        scale={[4, 0.2, 4]}
-        receiveShadow
-      />
+      <RigidBody type="fixed" restitution={0.2} friction={0}>
+        <mesh
+          geometry={boxGeometry}
+          material={floor1Material}
+          position={[0, 0, 0]}
+          scale={[4, 0.2, 4]}
+          receiveShadow
+        />
+      </RigidBody>
       <RigidBody
         type="fixed"
         position={[0, 0.1, 0]}

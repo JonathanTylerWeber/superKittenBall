@@ -22,9 +22,9 @@ export default function Player() {
   const start = useGame((state) => state.start);
   const end = useGame((state) => state.end);
   const restart = useGame((state) => state.restart);
-  const blocksCount = useGame((state) => state.blocksCount);
+  // const blocksCount = useGame((state) => state.blocksCount);
 
-  const cat = useGLTF("./cat.glb");
+  const cat = useGLTF("./models/cat.glb");
   const catRef = useRef<THREE.Group | null>(null);
 
   const animations = useAnimations(cat.animations, catRef);
@@ -128,7 +128,7 @@ export default function Player() {
       state.camera.lookAt(smoothCameraTarget);
 
       // Phases
-      if (bodyPosition.z < -(blocksCount * 4 + 2) - 2) {
+      if (bodyPosition.z < -12 - 2) {
         end();
       }
       if (bodyPosition.y < -4) {

@@ -13,16 +13,17 @@ export default function Player() {
 
   const [smoothCameraPosition] = useState(() => new THREE.Vector3(10, 10, 10));
   const [smoothCameraTarget] = useState(() => new THREE.Vector3());
+  // Ref for our additional Y offset which we want to change gradually
+  const extraYOffsetRef = useRef(0);
 
   const [currentAction, setCurrentAction] =
     useState<THREE.AnimationAction | null>(null);
-
   const [bodyKey, setBodyKey] = useState(0);
 
   const start = useGame((state) => state.start);
   const end = useGame((state) => state.end);
   const restart = useGame((state) => state.restart);
-  // const blocksCount = useGame((state) => state.blocksCount);
+  const phase = useGame((state) => state.phase);
 
   const cat = useGLTF("./models/cat.glb");
   const catRef = useRef<THREE.Group | null>(null);
@@ -32,17 +33,15 @@ export default function Player() {
   // Apply color to the cat model when it's loaded
   useEffect(() => {
     if (catRef.current) {
-      // Traverse the model's children and apply color to any meshes
       catRef.current.traverse((child) => {
         if (child instanceof THREE.Mesh && child.material) {
-          // Ensure the material is a MeshStandardMaterial and set the color
           if (child.material instanceof THREE.MeshStandardMaterial) {
-            child.material.color.set(0x000000); // Apply red color
+            child.material.color.set(0x000000);
           }
         }
       });
     }
-  }, [cat]); // Only apply when the cat model is loaded
+  }, [cat]);
 
   useFrame((state, delta) => {
     const { forward, backward, leftward, rightward } = getKeys();
@@ -72,19 +71,13 @@ export default function Player() {
       body.current.applyImpulse(impulse, true);
       body.current.applyTorqueImpulse(torque, true);
 
-      // cat
-      // Get the velocity vector
-      const velocity = body.current?.linvel();
+      // Cat animation & rotation logic
+      const velocity = body.current.linvel();
       const horizontalVelocity = new THREE.Vector3(velocity.x, 0, velocity.z);
       const verticalVelocity = new THREE.Vector3(0, velocity.y, 0);
       const velocityMagnitude = horizontalVelocity.length();
-
-      // Set thresholds for switching between animations
       const runThreshold = 0.5;
-
       let newAction: THREE.AnimationAction | null = null;
-
-      // Switch animation based on horizontal velocity
       if (
         velocityMagnitude > runThreshold ||
         verticalVelocity.length() > 0.05
@@ -93,8 +86,6 @@ export default function Player() {
       } else {
         newAction = animations.actions["EmptyAction"];
       }
-
-      // Crossfade between animations for smooth transition
       if (newAction !== currentAction) {
         if (currentAction) {
           currentAction.fadeOut(0.5);
@@ -102,39 +93,63 @@ export default function Player() {
         newAction?.reset().fadeIn(0.5).play();
         setCurrentAction(newAction);
       }
-
-      // Rotate the cat based on the direction of movement
       const moveDirection = new THREE.Vector3(velocity.x, 0, velocity.z);
-
       moveDirection.normalize();
       if (moveDirection.length() > 0 && catRef.current) {
         const angle = Math.atan2(moveDirection.z, moveDirection.x);
-        catRef.current.rotation.y = -angle; // Update the Y rotation to face the direction
+        catRef.current.rotation.y = -angle;
       }
 
-      // Camera
+      // Camera target position based on the player's body
       const bodyPosition = body.current.translation();
       const cameraPosition = new THREE.Vector3().copy(bodyPosition);
       cameraPosition.z += 2.25;
       cameraPosition.y += 0.65;
 
+      // Gradually update the extra Y offset when phase === "ended"
+      const targetExtraY = phase === "ended" ? 2 : 0;
+      extraYOffsetRef.current = THREE.MathUtils.lerp(
+        extraYOffsetRef.current,
+        targetExtraY,
+        0.05
+      );
+      cameraPosition.y += extraYOffsetRef.current;
+
       const cameraTarget = new THREE.Vector3().copy(bodyPosition);
       cameraTarget.y += 0.25;
 
+      // Smoothly interpolate the camera's position and target
       smoothCameraPosition.lerp(cameraPosition, 5 * delta);
       smoothCameraTarget.lerp(cameraTarget, 5 * delta);
-
       state.camera.position.copy(smoothCameraPosition);
-      state.camera.lookAt(smoothCameraTarget);
 
-      // Phases
-      if (bodyPosition.z < -12 - 2) {
+      // Only update the camera orientation if the game isn't ended.
+      if (phase !== "ended") {
+        state.camera.lookAt(smoothCameraTarget);
+      }
+
+      if (phase == "ended") {
+        if (body.current) {
+          // body.current.setTranslation({ x: 0, y: 0, z: 0 }, true);
+          body.current.setLinvel({ x: 0, y: 0, z: 0 }, true);
+          body.current.setAngvel({ x: 0, y: 0, z: 0 }, true);
+        }
+      }
+
+      // Game phase conditions
+      // basic
+      // if (bodyPosition.z < -2) {
+      //   end();
+      // }
+
+      // full
+      if (bodyPosition.z < -70) {
         end();
       }
+
       if (bodyPosition.y < -4) {
         restart();
       }
-
       if (catRef.current) {
         const catPosition = new THREE.Vector3().copy(bodyPosition);
         catPosition.y -= 0.2;
@@ -165,7 +180,7 @@ export default function Player() {
     }
 
     if (catRef.current) {
-      catRef.current.rotation.set(0, Math.PI * 0.5, 0); // Reset the cat's rotation (Math.PI * 0.5 makes it face forward)
+      catRef.current.rotation.set(0, Math.PI * 0.5, 0);
     }
   };
 

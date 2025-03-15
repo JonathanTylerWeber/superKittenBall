@@ -18,7 +18,7 @@ export default function Experience() {
         environmentIntensity={0}
       />
 
-      <Physics debug={true}>
+      <Physics debug={false}>
         <Lights />
         <Level />
         <Player />

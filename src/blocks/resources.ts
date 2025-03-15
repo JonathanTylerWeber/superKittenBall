@@ -15,7 +15,7 @@ export const floor2Material = new THREE.MeshStandardMaterial({
 });
 
 export const obstacleMaterial = new THREE.MeshStandardMaterial({
-  color: "orangered",
+  color: "mediumpurple",
 });
 
 export const wallMaterial = new THREE.MeshStandardMaterial({

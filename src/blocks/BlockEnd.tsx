@@ -1,5 +1,5 @@
 // components/BlockEnd.tsx
-import { useGLTF, Text } from "@react-three/drei";
+import { useGLTF } from "@react-three/drei";
 import { RigidBody } from "@react-three/rapier";
 import { boxGeometry, floor1Material } from "./resources";
 import { useFrame } from "@react-three/fiber";
